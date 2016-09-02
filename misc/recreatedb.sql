@@ -1,64 +1,67 @@
-DROP TABLE Logins
-DROP TABLE GameLog
-DROP TABLE GamePlayers
-DROP TABLE Games
-DROP TABLE Users
+DROP TABLE IF EXISTS logins;
+DROP TABLE IF EXISTS gamelog;
+DROP TABLE IF EXISTS gameplayers;
+DROP TABLE IF EXISTS games;
+DROP TABLE IF EXISTS users;
 
 /* Original schema: */
 
-CREATE TABLE Users(
-    id INT IDENTITY PRIMARY KEY, 
-    name NVARCHAR(32) NOT NULL UNIQUE, 
-    passwd BINARY(32) NOT NULL, 
-    isValid BIT NOT NULL,
-	email NVARCHAR(MAX) NOT NULL,
-    createTime DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
-	validationCode UNIQUEIDENTIFIER)
-    
-CREATE TABLE Games( 
-    id INT IDENTITY PRIMARY KEY, 
-    startData NVARCHAR(MAX) NOT NULL, 
-    startTime DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
-	endTime DATETIME2(7),
-	spiesWin BIT)
-        
-CREATE TABLE GamePlayers(
-    gameId INT NOT NULL REFERENCES Games(id) ON DELETE CASCADE, 
-    seat TINYINT NOT NULL, 
-	playerId INT NOT NULL REFERENCES Users(id),
-    isSpy BIT NOT NULL, 
-    CONSTRAINT pk_gameplayers PRIMARY KEY (gameId, seat),
-	CONSTRAINT uniquePlayer UNIQUE (playerId, gameId))
-    
-CREATE TABLE GameLog(
-    gameId INT NOT NULL REFERENCES Games(id) ON DELETE CASCADE, 
-    id INT NOT NULL,
-	playerId INT NOT NULL REFERENCES Users(id), 
-    action NVARCHAR(MAX) NOT NULL,
-    time DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT pk_gamelog PRIMARY KEY (gameId, id))
+CREATE TABLE users
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name VARCHAR(32) NOT NULL UNIQUE,
+    passwd TEXT NOT NULL, 
+    is_valid BOOLEAN NOT NULL,
+    email TEXT NOT NULL,
+    create_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    validation_code CHAR(16)
+);
 
-CREATE TABLE Logins(
-	playerId INT NOT NULL REFERENCES Users(id),
-	time DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
-	ip BINARY(4) NOT NULL)
+CREATE TABLE games
+( 
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    start_data TEXT NOT NULL, 
+    start_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP(6),
+    spies_win BOOLEAN
+);
 
-CREATE CLUSTERED INDEX idx_logins ON Logins(playerId, time)
+CREATE TABLE gameplayers
+(
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE, 
+    seat SMALLINT NOT NULL, 
+    player_id INTEGER NOT NULL REFERENCES users(id),
+    is_spy BOOLEAN NOT NULL, 
+    CONSTRAINT pk_gameplayers PRIMARY KEY (game_id, seat),
+    CONSTRAINT unique_player UNIQUE (player_id, game_id)
+);
 
-DECLARE @botpass BINARY(32)
-SET @botpass = HASHBYTES('sha2_256', 'password')
+CREATE TABLE gamelog
+(
+    game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE, 
+    id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL REFERENCES users(id), 
+    action TEXT NOT NULL,
+    time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_gamelog PRIMARY KEY (game_id, id)
+);
 
-INSERT Users(name, passwd, isValid, email) VALUES ('test', @botpass, 1, 'test@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Alpha>', @botpass, 1, 'alpha@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Bravo>', @botpass, 1, 'bravo@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Charlie>', @botpass, 1, 'charlie@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Delta>', @botpass, 1, 'delta@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Echo>', @botpass, 1, 'echo@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Foxtrot>', @botpass, 1, 'foxtrot@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Golf>', @botpass, 1, 'golf@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Hotel>', @botpass, 1, 'hotel@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<India>', @botpass, 1, 'india@example.com')
-INSERT Users(name, passwd, isValid, email) VALUES ('<Juliet>', @botpass, 1, 'juliet@example.com')
+CREATE TABLE logins
+(
+    player_id INTEGER NOT NULL REFERENCES users(id),
+    time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip VARCHAR(30) NOT NULL
+);
+
+CREATE INDEX idx_logins on logins(player_id, time);
+
+/* CREATE EXTENSION pgcrypto; */
+
+INSERT INTO users(name, passwd, is_valid, email) VALUES ('test1', '', 1, 'test@example.com');
+INSERT INTO users(name, passwd, is_valid, email) VALUES ('test2', '', 1, 'test@example.com');
+INSERT INTO users(name, passwd, is_valid, email) VALUES ('test3', '', 1, 'test@example.com');
+INSERT INTO users(name, passwd, is_valid, email) VALUES ('test4', '', 1, 'test@example.com');
+INSERT INTO users(name, passwd, is_valid, email) VALUES ('test5', '', 1, 'test@example.com');
 
 /* Schema change: Games.gameType added */
-ALTER TABLE Games ADD gameType TINYINT NOT NULL DEFAULT 1
+ALTER TABLE Games ADD game_type SMALLINT NOT NULL DEFAULT 1;

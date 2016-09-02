@@ -7,6 +7,7 @@ mkdir release 2> nul
 REM Install dependencies.
 cd release
 copy ..\package.json > nul
+copy ..\sample_options.json options.json > nul
 call npm install
 cd ..
 
